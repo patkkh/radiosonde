@@ -38,6 +38,24 @@ class UPP():
         df = df.replace(99999,np.nan)
         return df
 
+    def read_gps_mdb(self,MDB):
+        df = mdb.read_table(MDB,"GPS")
+        sec = df.FlightTime / 1000
+        sec = sec.astype('int')
+        alt = df.Altitude
+        nz  = len(alt)
+        asc = np.zeros(nz)
+        for i in np.arange(nz-1):
+            dh = alt[i+1] - alt[i]
+            dt = sec[i+1] - sec[i]
+            if not dh == 0 and not dt == 0:
+                asc[i+1] = dh / dt
+        df['sec'] = sec
+        df['asc'] = asc
+        df['alt'] = df.Altitude
+        del(df['Altitude'])
+        return df
+
     def get_ftime(self,fi):
         dumy = fi.split("_")[-1]
         fdate = dumy.split(".")[0]
@@ -48,4 +66,11 @@ class UPP():
         date = fi.split("_")[2]
         time = fi.split("_")[3]
         fdate = pd.to_datetime(date+time)
+        return fdate
+
+    def get_mdb_time(self,fi):
+        dumy = fi.split("-")
+        date = dumy[0]
+        hour = dumy[1]
+        fdate = date+hour+"0000"
         return fdate
